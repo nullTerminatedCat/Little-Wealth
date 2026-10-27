@@ -43,7 +43,11 @@ app/build/outputs/apk/debug/app-debug.apk
 
 ## 噪声粗测（独立模块 `:noise`）
 
-和账本无关的小工具，包名 `com.lincx.noise`。用麦克风估算瞬时参考声级和本次峰值，界面为中文。手机麦克风没有校准，数字只供参考，不是声级计。应用不申请网络权限；测量只在页面位于前台时进行，离开页面会放开麦克风。
+和账本无关的小工具，包名 `com.lincx.noise`，界面为中文。它用麦克风估算 **A 计权**参考声级：大数字是快档（能量平滑时间常数约 0.125 秒），另外给出本次峰值和等效声级 Leq。A 计权是按 IEC 61672 曲线做的数字近似。
+
+这不是计量器具。手机麦克风没有实验室校准，0 dBFS 只是固定当成 90 的满幅参考。可以在自认为安静的房间里测满约 2 秒，把这段等效声级平移到 30 dB(A)；房间如果并不是这个声级，所有读数会一起偏。相对起伏比绝对值更值得看。不要用于执法、职业卫生、听力诊断或验收。
+
+应用不申请网络权限。测量只在页面位于前台时进行，离开页面会放开麦克风。采集会优先请求未处理的麦克风，并尝试关闭自动增益、降噪和回声消除，便于在小米 15 这类机型上少受系统加工影响；系统若不提供该通路，读数仍会受影响。
 
 ```bash
 export ANDROID_HOME=/你的/Android/Sdk
@@ -61,5 +65,5 @@ noise/build/outputs/apk/debug/noise-debug.apk
 单元测试：
 
 ```bash
-./gradlew :app:testDebugUnitTest
+./gradlew :app:testDebugUnitTest :noise:testDebugUnitTest
 ```

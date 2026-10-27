@@ -16,3 +16,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "licai"
 include(":app")
+include(":noise")

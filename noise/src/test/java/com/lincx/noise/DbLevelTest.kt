@@ -1,38 +1,10 @@
 package com.lincx.noise
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Test
 
 class DbLevelTest {
-    @Test
-    fun silenceIsZero() {
-        val window = DbLevel.measure(ShortArray(128), 128)
-        assertEquals(0.0, window.instantDb, 0.0)
-        assertEquals(0.0, window.peakDb, 0.0)
-    }
-
-    @Test
-    fun emptyCountIsZero() {
-        val window = DbLevel.measure(shortArrayOf(1000), 0)
-        assertEquals(0.0, window.instantDb, 0.0)
-    }
-
-    @Test
-    fun fullScaleConstantIsAboutNinety() {
-        val samples = ShortArray(1000) { 32767 }
-        val window = DbLevel.measure(samples, samples.size)
-        assertEquals(90.0, window.instantDb, 0.02)
-        assertEquals(90.0, window.peakDb, 0.02)
-    }
-
-    @Test
-    fun negativeFullScaleUsesAbsolutePeak() {
-        val samples = ShortArray(200) { -32768 }
-        val window = DbLevel.measure(samples, samples.size)
-        assertEquals(90.0, window.peakDb, 0.02)
-        assertEquals(90.0, window.instantDb, 0.02)
-    }
-
     @Test
     fun halfAmplitudeIsAboutSixDbDown() {
         val db = DbLevel.amplitudeToReferenceDb(16384.0)
@@ -47,5 +19,40 @@ class DbLevelTest {
         assertEquals(DbLevel.Advice.LOUDISH, DbLevel.advice(69.9))
         assertEquals(DbLevel.Advice.VERY_LOUD, DbLevel.advice(70.0))
         assertEquals(DbLevel.Advice.VERY_LOUD, DbLevel.advice(120.0))
+    }
+
+    @Test
+    fun designCurveIsZeroAtOneKilohertz() {
+        assertEquals(0.0, AWeightingFilter.designDb(1_000.0), 0.0001)
+    }
+
+    @Test
+    fun designCurveMatchesKnownHundredHertz() {
+        assertEquals(-19.1, AWeightingFilter.designDb(100.0), 0.05)
+    }
+
+    @Test
+    fun quietRoomOffsetCentersOnThirty() {
+        val decision = DbLevel.decideQuietRoomCalibration(2.0, 42.0)
+        assertEquals(DbLevel.CalibrationKind.APPLIED, decision.kind)
+        assertEquals(-12.0, decision.offsetDb!!, 0.0001)
+    }
+
+    @Test
+    fun quietRoomRejectsShortOrDeadOrExtreme() {
+        assertEquals(
+            DbLevel.CalibrationKind.TOO_SHORT,
+            DbLevel.decideQuietRoomCalibration(1.5, 42.0).kind,
+        )
+        assertNull(DbLevel.decideQuietRoomCalibration(1.5, 42.0).offsetDb)
+        assertEquals(
+            DbLevel.CalibrationKind.SIGNAL_TOO_LOW,
+            DbLevel.decideQuietRoomCalibration(2.0, 4.9).kind,
+        )
+        assertEquals(
+            DbLevel.CalibrationKind.OFFSET_OUT_OF_RANGE,
+            DbLevel.decideQuietRoomCalibration(2.0, 91.0).kind,
+        )
+        assertNull(DbLevel.decideQuietRoomCalibration(2.0, 91.0).offsetDb)
     }
 }

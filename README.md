@@ -41,6 +41,23 @@ app/build/outputs/apk/debug/app-debug.apk
 
 仓库里同时放了一份同样的调试包：`dist/licai-debug.apk`。它用调试证书签名，只用于安装验证，不要拿去上架。
 
+## 噪声粗测（独立模块 `:noise`）
+
+和账本无关的小工具，包名 `com.lincx.noise`。用麦克风估算瞬时参考声级和本次峰值，界面为中文。手机麦克风没有校准，数字只供参考，不是声级计。应用不申请网络权限；测量只在页面位于前台时进行，离开页面会放开麦克风。
+
+```bash
+export ANDROID_HOME=/你的/Android/Sdk
+./gradlew :noise:assembleDebug
+```
+
+成功后调试包在：
+
+```text
+noise/build/outputs/apk/debug/noise-debug.apk
+```
+
+装到 Android 8.0（API 26）及以上即可，已按 Android 15（含小米 15）的目标版本编译。首次打开要点允许麦克风；若系统不再弹出权限框，到系统设置里为本应用打开麦克风。小米手机路径一般为：设置 → 应用设置 → 噪声粗测 → 权限。
+
 单元测试：
 
 ```bash
